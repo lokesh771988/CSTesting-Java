@@ -9,9 +9,9 @@ import java.util.concurrent.TimeUnit;
 /**
  * Starts the CSTesting Node server (npx cstesting server --port=...) and waits until it is listening.
  */
-final class ServerStarter {
+public final class ServerStarter {
 
-    static ServerConnection start(int port, boolean headless) {
+    public static ServerConnection start(int port, boolean headless) {
         ProcessBuilder pb = new ProcessBuilder(nodeCommand(port, headless));
         pb.redirectErrorStream(true);
         Process process;

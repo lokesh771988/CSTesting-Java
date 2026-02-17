@@ -1,6 +1,8 @@
 package com.cstesting;
 
 import com.cstesting.protocol.ServerConnection;
+import com.cstesting.protocol.ServerStarter;
+import com.cstesting.protocol.WebSocketServerConnection;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 
@@ -23,7 +25,7 @@ final class CSTestingBrowserImpl implements CSTestingBrowser {
     }
 
     static CSTestingBrowser connect(String serverUrl) {
-        ServerConnection conn = com.cstesting.protocol.WebSocketServerConnection.connect(serverUrl);
+        ServerConnection conn = WebSocketServerConnection.connect(serverUrl);
         return new CSTestingBrowserImpl(conn);
     }
 

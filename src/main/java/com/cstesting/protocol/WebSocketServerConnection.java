@@ -14,7 +14,7 @@ import java.util.concurrent.TimeUnit;
  * WebSocket implementation of ServerConnection.
  * Connects to ws://host:port and sends JSON requests; responses are matched by id.
  */
-final class WebSocketServerConnection implements ServerConnection {
+public final class WebSocketServerConnection implements ServerConnection {
 
     private static final Gson GSON = new Gson();
     private static final long RESPONSE_TIMEOUT_MS = 60_000;
@@ -25,14 +25,14 @@ final class WebSocketServerConnection implements ServerConnection {
     /**
      * Connect to the given WebSocket URL (e.g. ws://localhost:9274).
      */
-    static ServerConnection connect(String serverUrl) {
+    public static ServerConnection connect(String serverUrl) {
         URI uri = URI.create(serverUrl.startsWith("ws") ? serverUrl : "ws://" + serverUrl);
         WebSocketServerConnection conn = new WebSocketServerConnection(uri);
         conn.connect();
         return conn;
     }
 
-    WebSocketServerConnection(URI serverUri) {
+    public WebSocketServerConnection(URI serverUri) {
         this.client = new WebSocketClient(serverUri) {
             @Override
             public void onMessage(String message) {
@@ -51,7 +51,7 @@ final class WebSocketServerConnection implements ServerConnection {
         };
     }
 
-    void connect() {
+    public void connect() {
         try {
             client.connectBlocking();
         } catch (InterruptedException e) {

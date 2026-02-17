@@ -4,18 +4,30 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>com.cstesting</groupId>
+  <groupId>io.github.lokesh771988</groupId>
   <artifactId>cstesting-java</artifactId>
   <version>0.1.0</version>
   <packaging>jar</packaging>
   <name>CSTesting Java Client</name>
   <description>Java client for CSTesting browser automation (connects to Node server).</description>
-  <url>https://github.com/lokesh771988/CSTesting-Java.git</url>
+  <url>https://github.com/lokesh771988/CSTesting-Java</url>
+
+  <distributionManagement>
+    <snapshotRepository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+    </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
+  </distributionManagement>
 
   <properties>
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <skipSigning>false</skipSigning>
   </properties>
 
   <dependencies>
@@ -56,6 +68,42 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <groupId>org.sonatype.plugins</groupId>
+        <artifactId>nexus-staging-maven-plugin</artifactId>
+        <version>1.6.13</version>
+        <extensions>true</extensions>
+        <configuration>
+          <serverId>ossrh</serverId>
+          <nexusUrl>https://s01.oss.sonatype.org/</nexusUrl>
+          <autoReleaseAfterClose>true</autoReleaseAfterClose>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-gpg-plugin</artifactId>
+        <version>3.1.0</version>
+        <executions>
+          <execution>
+            <id>sign-artifacts</id>
+            <phase>verify</phase>
+            <goals><goal>sign</goal></goals>
+            <configuration>
+              <skip>${skipSigning}</skip>
+              <gpgArguments>
+                <arg>--pinentry-mode</arg>
+                <arg>loopback</arg>
+              </gpgArguments>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
+
+  <scm>
+    <connection>scm:git:git://github.com/lokesh771988/CSTesting-Java.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/lokesh771988/CSTesting-Java.git</developerConnection>
+    <url>https://github.com/lokesh771988/CSTesting-Java</url>
+  </scm>
 </project>

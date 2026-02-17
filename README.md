@@ -1,5 +1,7 @@
 # CSTesting Java Client
 
+**Repo:** [github.com/lokesh771988/CSTesting-Java](https://github.com/lokesh771988/CSTesting-Java)
+
 Standalone Java project for the **CSTesting** browser automation client. If you **don’t install Node.js** on the machine running the Java tests, you must **connect to an existing server** (use `serverUrl`); the default “auto-start” mode requires Node.js on that machine. It connects to the CSTesting Node server (WebSocket) and exposes the same API: `goto`, `click`, `type`, `waitForURL`, etc.
 
 ## Prerequisites

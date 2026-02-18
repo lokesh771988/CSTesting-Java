@@ -7,7 +7,11 @@
 - **GPG (GnuPG)** — **free and open source** (no payment). Required by Maven Central to sign artifacts.
   - **Windows:** Install [Gpg4win](https://www.gpg4win.org/download.html) (choose “Simple install”). After install, **restart your terminal** (or IDE) so `gpg` is on PATH. Check: `gpg --version`.
   - **Create a key:** `gpg --full-generate-key` → choose default (RSA and RSA, 3072), enter your name/email, set a **passphrase** (you’ll type it when running `mvn deploy`).
-  - **Publish the key:** `gpg --list-keys` to see your key ID, then `gpg --keyserver keyserver.ubuntu.com --send-keys YOUR_KEY_ID`.
+  - **Publish the key (required for Central):** Sonatype validates signatures against public keyservers. Upload your public key **before** deploying:
+    ```bash
+    gpg --keyserver keys.openpgp.org --send-keys B770B0219107FF853D17C470C3D3F13C805A9DCB
+    ```
+    (Use your key fingerprint from `gpg --list-keys --keyid-format long`.) Wait a few minutes for propagation, then run `mvn deploy`.
   - If you get “Could not determine gpg version”: GnuPG is not installed or not on PATH; install Gpg4win and restart the terminal.
 
 ## 2. Deploy from your machine

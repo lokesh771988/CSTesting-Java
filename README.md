@@ -42,6 +42,8 @@ CSTesting-Java/
 mvn clean package
 ```
 
+If you get *"The process cannot access the file ... cstesting-java-0.1.0.jar"*, something (e.g. a running demo or another Maven run) has the JAR open. Close it, or run `.\unlock-and-build.ps1` (stops Java/Chrome and deletes `target`, then runs `mvn package`).
+
 ## Install to local Maven repo
 
 ```bash

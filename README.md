@@ -2,14 +2,13 @@
 
 **Repo:** [github.com/lokesh771988/CSTesting-Java](https://github.com/lokesh771988/CSTesting-Java)
 
-Standalone Java project for the **CSTesting** browser automation client. If you **don’t install Node.js** on the machine running the Java tests, you must **connect to an existing server** (use `serverUrl`); the default “auto-start” mode requires Node.js on that machine. It connects to the CSTesting Node server (WebSocket) and exposes the same API: `goto`, `click`, `type`, `waitForURL`, etc.
+CSTesting for Java is **our own tool** that works like [Playwright for Java](https://github.com/microsoft/playwright-java): **no Playwright dependency, no npx, no Node server.** When you use **useChromeDirect** (default), the client launches Chrome via the **Chrome DevTools Protocol (CDP)** — pure Java, using your system Chrome.
 
 ## Prerequisites
 
 - **Java 11+**
-- **Node.js** — only needed in two cases:
-  - **You use auto-start** (default): `CSTesting.createBrowser()` or `createBrowser(options)` without `serverUrl`. The Java client runs `npx cstesting server --port=9274` on the same machine, so **Node.js must be installed** there. Without Node.js, that will fail.
-  - **You connect to an existing server**: `CSTestingOptions.builder().serverUrl("ws://host:9274").build()`. The machine that runs your Java tests **does not need Node.js**; only the machine (or CI) that runs the CSTesting server needs Node.js.
+- **Chrome** installed (used via CDP when `useChromeDirect` is true). Override path with `-Dcstesting.chrome.path=/path/to/chrome` if needed.
+- Optional: use **serverUrl** to connect to an existing CSTesting server instead of launching Chrome via CDP.
 
 ## Project layout
 
@@ -23,11 +22,19 @@ CSTesting-Java/
     ├── CSTestingBrowser.java    # Browser API interface
     ├── CSTestingBrowserImpl.java
     ├── CSTestingBrowserFrame.java
+    ├── impl/cdp/
+    │   ├── CDPConnection.java      # Chrome DevTools Protocol over WebSocket
+    │   ├── ChromeLauncher.java     # Launch Chrome (no Playwright, no npx)
+    │   └── CSTestingBrowserCDP.java
+    ├── impl/driver/
+    │   └── Driver.java             # Optional: for Node server path (serverUrl / bundled driver)
     └── protocol/
         ├── ServerConnection.java
         ├── WebSocketServerConnection.java
         └── ServerStarter.java
 ```
+
+**Chrome via CDP (default):** When **useChromeDirect** is true, we launch Chrome with `--remote-debugging-port`, connect over WebSocket to the Chrome DevTools Protocol, and drive the browser from Java. No Playwright, no npx, no Node — just Java + Chrome.
 
 ## Build
 
@@ -45,13 +52,15 @@ Then in another project:
 
 ```xml
 <dependency>
-  <groupId>com.cstesting</groupId>
+  <groupId>io.github.lokesh771988</groupId>
   <artifactId>cstesting-java</artifactId>
   <version>0.1.0</version>
 </dependency>
 ```
 
 ## Usage
+
+**Default: launch Chrome via CDP (useChromeDirect = true).** Our own implementation: starts Chrome, connects to CDP over WebSocket, same API as Playwright-style. No Playwright install, no npx.
 
 ```java
 import com.cstesting.CSTesting;
@@ -68,7 +77,7 @@ String url = browser.url();
 browser.close();
 ```
 
-Connect to an existing server:
+**Connect to an existing server** (no driver on this machine):
 
 ```java
 CSTestingBrowser browser = CSTesting.createBrowser(
@@ -76,10 +85,21 @@ CSTestingBrowser browser = CSTesting.createBrowser(
 );
 ```
 
+**Chrome path (useChromeDirect):**
+
+- **Bundled driver:** set `-Dcstesting.cli.dir=/path/to/driver` (directory with `node` and `package/cli.js` or `server.js`) so users don’t need Node installed.
+
+## Troubleshooting
+
+### "Chrome did not expose CDP" / "Chrome not found"
+
+When **useChromeDirect** is true, the client launches Chrome and connects via CDP. Install [Chrome](https://www.google.com/chrome/) or set `-Dcstesting.chrome.path=/path/to/chrome`. If another app is using port 9222, close it or use **serverUrl** to connect to an existing server instead.
+
 ## Publish to Maven Central
 
 See the **EasyTesting** repo docs: `docs/publish-java-maven-gradle.md` for Sonatype OSSRH, GPG signing, and Gradle equivalent.
 
 ## Note
 
-The CSTesting Node server (`npx cstesting server --port=9274`) must be implemented in the main EasyTesting repo. This Java project is ready to build and publish; the wire protocol is described in the EasyTesting repo under `docs/multi-language-support.md`.
+- **Chrome direct = our own CDP implementation:** No Playwright, no npx. When `useChromeDirect(true)` (default), we launch Chrome and talk to it via the Chrome DevTools Protocol from Java.
+- Optional: connect to a CSTesting Node server with **serverUrl**; the wire protocol is in the EasyTesting repo under `docs/multi-language-support.md`.

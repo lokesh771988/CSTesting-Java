@@ -2,15 +2,15 @@ package com.cstesting;
 
 /**
  * Entry point for CSTesting Java client.
- * Creates a browser that either starts the Node server (via npx cstesting server)
- * or connects to an existing server URL.
+ * When useChromeDirect is true, launches Chrome via our own CDP implementation (no Playwright, no npx).
+ * Optional: connect to existing CSTesting server via serverUrl.
  */
 public final class CSTesting {
 
     private CSTesting() {}
 
     /**
-     * Create a browser with default options (headless, auto-start server on port 9274).
+     * Create a browser with default options (headless Chrome via CDP).
      */
     public static CSTestingBrowser createBrowser() {
         return createBrowser(CSTestingOptions.builder().build());
@@ -18,12 +18,15 @@ public final class CSTesting {
 
     /**
      * Create a browser with the given options.
-     * If serverUrl is set, connects to that server; otherwise starts "npx cstesting server --port=&lt;port&gt;".
+     * If serverUrl is set, connects to that server. Otherwise useChromeDirect(true) launches Chrome via CDP (our own code, no Playwright/npx).
      */
     public static CSTestingBrowser createBrowser(CSTestingOptions options) {
         if (options.getServerUrl() != null && !options.getServerUrl().isEmpty()) {
             return CSTestingBrowserImpl.connect(options.getServerUrl());
         }
-        return CSTestingBrowserImpl.startServer(options);
+        if (options.isUseChromeDirect()) {
+            return com.cstesting.impl.cdp.CSTestingBrowserCDP.create(options);
+        }
+        throw new IllegalArgumentException("Set serverUrl to connect to an existing server, or useChromeDirect(true) to launch Chrome via CDP.");
     }
 }

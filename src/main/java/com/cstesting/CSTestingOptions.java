@@ -9,11 +9,13 @@ public final class CSTestingOptions {
     private final boolean headless;
     private final int port;
     private final String serverUrl;
+    private final boolean useChromeDirect;
 
     private CSTestingOptions(Builder b) {
         this.headless = b.headless;
         this.port = b.port;
         this.serverUrl = b.serverUrl;
+        this.useChromeDirect = b.useChromeDirect;
     }
 
     public static Builder builder() {
@@ -33,10 +35,16 @@ public final class CSTestingOptions {
         return serverUrl;
     }
 
+    /** If true, launch Chrome via Selenium (no Node.js or CSTesting server required). */
+    public boolean isUseChromeDirect() {
+        return useChromeDirect;
+    }
+
     public static final class Builder {
         private boolean headless = true;
         private int port = 9274;
         private String serverUrl;
+        private boolean useChromeDirect = true;
 
         public Builder headless(boolean headless) {
             this.headless = headless;
@@ -50,6 +58,12 @@ public final class CSTestingOptions {
 
         public Builder serverUrl(String serverUrl) {
             this.serverUrl = serverUrl;
+            return this;
+        }
+
+        /** Use Chrome directly via Selenium (no Node.js or CSTesting server). Requires Chrome browser installed. */
+        public Builder useChromeDirect(boolean useChromeDirect) {
+            this.useChromeDirect = useChromeDirect;
             return this;
         }
 

@@ -1,42 +1,34 @@
 package com.cstesting.protocol;
 
+import com.cstesting.impl.driver.Driver;
+
 import java.io.IOException;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Starts the CSTesting Node server (npx cstesting server --port=...) and waits until it is listening.
+ * Starts the CSTesting server using the configured Driver (Playwright-style).
+ * Uses bundled/preinstalled driver if cstesting.cli.dir is set, otherwise system npx.
  */
 public final class ServerStarter {
 
     public static ServerConnection start(int port, boolean headless) {
-        ProcessBuilder pb = new ProcessBuilder(nodeCommand(port, headless));
+        ProcessBuilder pb = Driver.ensureDriver().createProcessBuilder(port, headless);
         pb.redirectErrorStream(true);
-        Process process;
         try {
-            process = pb.start();
+            pb.start();
         } catch (IOException e) {
-            throw new RuntimeException("Failed to start CSTesting server. Is Node.js installed and on PATH?", e);
+            throw new RuntimeException(
+                "Failed to start CSTesting server. "
+                + "If using system driver: is Node.js installed and on PATH? Set cstesting.cli.dir to use a bundled driver. "
+                + "Or use CSTestingOptions.serverUrl() to connect to an existing server.",
+                e);
         }
         String wsUrl = "ws://localhost:" + port;
         waitForServer(port);
         WebSocketServerConnection conn = new WebSocketServerConnection(URI.create(wsUrl));
         conn.connect();
         return conn;
-    }
-
-    private static List<String> nodeCommand(int port, boolean headless) {
-        List<String> cmd = new ArrayList<>();
-        cmd.add("npx");
-        cmd.add("cstesting");
-        cmd.add("server");
-        cmd.add("--port=" + port);
-        if (!headless) {
-            cmd.add("--no-headless");
-        }
-        return cmd;
     }
 
     private static void waitForServer(int port) {

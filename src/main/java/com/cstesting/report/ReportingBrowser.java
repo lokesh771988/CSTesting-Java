@@ -12,7 +12,7 @@ import java.util.stream.Collectors;
  * into an {@link HtmlReport} so that an HTML report is generated with the same number of steps
  * as the test, without manually calling {@link HtmlReport#recordPass(String, String)}.
  * <p>
- * Use {@link CSTesting#createBrowserWithReport(CSTestingOptions, HtmlReport)} or wrap an existing
+ * Use {@link com.cstesting.CSTesting#createBrowserWithReport(com.cstesting.CSTestingOptions, com.cstesting.report.HtmlReport)} or wrap an existing
  * browser: {@code new ReportingBrowser(browser, report)}. Use the returned browser as usual;
  * at the end call {@link HtmlReport#write(String)} to generate the HTML.
  */

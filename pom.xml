@@ -6,7 +6,7 @@
 
   <groupId>io.github.lokesh771988</groupId>
   <artifactId>cstesting-java</artifactId>
-  <version>0.1.1</version>
+  <version>0.1.2</version>
   <packaging>jar</packaging>
   <name>CSTesting Java Client</name>
   <description>Java client for CSTesting browser automation (connects to Node server).</description>

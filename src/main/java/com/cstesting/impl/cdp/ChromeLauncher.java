@@ -46,6 +46,7 @@ final class ChromeLauncher {
         args.add("--disable-sync");
         args.add("--disable-translate");
         args.add("--disable-extensions");
+        args.add("--disable-popup-blocking");   // allow new tabs/windows opened by script or clicks
         args.add("--metrics-recording-only");
         args.add("--mute-audio");
         try {
@@ -127,6 +128,43 @@ final class ChromeLauncher {
         throw new RuntimeException(
             "Chrome did not expose CDP at port " + port + " in time. "
             + "Ensure Chrome is installed. Override with -Dcstesting.chrome.path=/path/to/chrome");
+    }
+
+    /** Returns all page targets' WebSocket URLs from /json/list (for window/tab handling). */
+    static List<String> getAllPageWebSocketUrls(int port) {
+        List<String> out = new ArrayList<>();
+        for (JsonObject t : getPageTargets(port)) {
+            if (t.has("webSocketDebuggerUrl"))
+                out.add(t.get("webSocketDebuggerUrl").getAsString());
+        }
+        return out;
+    }
+
+    /** Returns page targets from /json/list (each has id, webSocketDebuggerUrl, type, etc.). */
+    static List<JsonObject> getPageTargets(int port) {
+        List<JsonObject> out = new ArrayList<>();
+        try {
+            String listUrl = "http://127.0.0.1:" + port + "/json/list";
+            HttpURLConnection conn = (HttpURLConnection) new URL(listUrl).openConnection();
+            conn.setConnectTimeout(2000);
+            conn.setReadTimeout(2000);
+            conn.setRequestMethod("GET");
+            if (conn.getResponseCode() != 200) return out;
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
+                StringBuilder sb = new StringBuilder();
+                String line;
+                while ((line = r.readLine()) != null) sb.append(line);
+                JsonArray arr = GSON.fromJson(sb.toString(), JsonArray.class);
+                if (arr != null) {
+                    for (int i = 0; i < arr.size(); i++) {
+                        JsonObject target = arr.get(i).getAsJsonObject();
+                        String type = target.has("type") ? target.get("type").getAsString() : "";
+                        if ("page".equals(type)) out.add(target);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return out;
     }
 
     /** Prefer page target from /json/list so Page.navigate works. Fallback to /json/version. */

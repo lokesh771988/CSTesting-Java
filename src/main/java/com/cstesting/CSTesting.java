@@ -29,4 +29,15 @@ public final class CSTesting {
         }
         throw new IllegalArgumentException("Set serverUrl to connect to an existing server, or useChromeDirect(true) to launch Chrome via CDP.");
     }
+
+    /**
+     * Create a browser that automatically records every action (gotoUrl, click, type, waitFor*, etc.)
+     * into the given {@link com.cstesting.report.HtmlReport}. No need to call {@link com.cstesting.report.HtmlReport#recordPass}
+     * manually – the report will contain one row per step. When done, call {@link com.cstesting.report.HtmlReport#write(String)}
+     * (e.g. from a finally block) to generate the HTML report.
+     */
+    public static CSTestingBrowser createBrowserWithReport(CSTestingOptions options, com.cstesting.report.HtmlReport report) {
+        CSTestingBrowser browser = createBrowser(options);
+        return new com.cstesting.report.ReportingBrowser(browser, report);
+    }
 }

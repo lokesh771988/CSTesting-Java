@@ -10,10 +10,12 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Chrome DevTools Protocol connection over WebSocket.
  * Sends CDP commands and returns the matching response by id.
+ * Events (messages with "method", no "id") are passed to the optional event handler.
  */
 final class CDPConnection {
 
@@ -23,6 +25,7 @@ final class CDPConnection {
     private final WebSocketClient client;
     private final BlockingQueue<JsonObject> responseQueue = new LinkedBlockingQueue<>();
     private final AtomicLong idGen = new AtomicLong(1);
+    private final AtomicReference<CDPEventHandler> eventHandler = new AtomicReference<>();
 
     CDPConnection(URI wsUri) throws InterruptedException {
         this.client = new WebSocketClient(wsUri) {
@@ -44,6 +47,14 @@ final class CDPConnection {
         client.connectBlocking();
     }
 
+    void setEventHandler(CDPEventHandler handler) {
+        eventHandler.set(handler);
+    }
+
+    URI getUri() {
+        return client.getURI();
+    }
+
     JsonObject send(String method, JsonObject params) {
         long id = idGen.incrementAndGet();
         JsonObject req = new JsonObject();
@@ -58,6 +69,11 @@ final class CDPConnection {
             java.util.List<JsonObject> pending = new java.util.ArrayList<>();
             while (System.currentTimeMillis() < deadline) {
                 JsonObject response = responseQueue.poll(2, TimeUnit.SECONDS);
+                if (response != null && response.has("method") && !response.has("id")) {
+                    CDPEventHandler h = eventHandler.get();
+                    if (h != null) h.onEvent(this, response);
+                    continue;
+                }
                 if (response != null && response.has("id") && response.get("id").getAsLong() == id) {
                     pending.forEach(responseQueue::offer);
                     if (response.has("error")) {

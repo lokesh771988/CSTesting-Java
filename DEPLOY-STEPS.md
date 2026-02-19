@@ -38,7 +38,7 @@ To publish to Central you must install GPG and run `mvn clean deploy` (without `
 ## 3. In the Central Portal / Nexus UI
 
 1. **Refresh** the page (or open **Staging** / **Staging Repositories** if your UI has it).
-2. Find the new staging repository (e.g. `iogithublokesh771988-xxxx`).
+2. Find the new staging repository (e.g. `iogithubcstesttool-xxxx`).
 3. **Close** the staging repo (button in the UI). This validates the artifacts.
 4. **Release** the staging repo. This publishes to Maven Central.
 5. With `autoReleaseAfterClose: true` in the pom, release may happen automatically after close.
@@ -46,4 +46,4 @@ To publish to Central you must install GPG and run `mvn clean deploy` (without `
 ## 4. After release
 
 - Artifacts appear on Maven Central after some time (often 10–30 minutes).
-- Users can then depend on: `io.github.lokesh771988:cstesting-java:0.1.0`.
+- Users can then depend on: `io.github.cstesttool:cstesting-java:0.1.0`.

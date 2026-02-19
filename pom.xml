@@ -4,13 +4,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
 
-  <groupId>io.github.lokesh771988</groupId>
+  <groupId>io.github.cstesttool</groupId>
   <artifactId>cstesting-java</artifactId>
-  <version>0.1.2</version>
+  <version>0.1.4</version>
   <packaging>jar</packaging>
   <name>CSTesting Java Client</name>
   <description>Java client for CSTesting browser automation (connects to Node server).</description>
-  <url>https://github.com/lokesh771988/CSTesting-Java</url>
+  <url>https://github.com/cstesttool/CSTesting-Java</url>
 
   <licenses>
     <license>
@@ -22,10 +22,10 @@
 
   <developers>
     <developer>
-      <id>lokesh771988</id>
+      <id>cstesttool</id>
       <name>Gorantla Lokesh</name>
       <email>lokesh.ust@gmail.com</email>
-      <url>https://github.com/lokesh771988</url>
+      <url>https://github.com/cstesttool</url>
     </developer>
   </developers>
 
@@ -44,7 +44,8 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <skipSigning>false</skipSigning>
+    <!-- Set to false when publishing to Maven Central (requires GPG). Skip when keyboxd/agent is not running. -->
+    <skipSigning>true</skipSigning>
   </properties>
 
   <dependencies>
@@ -124,7 +125,7 @@
             <goals><goal>sign</goal></goals>
             <configuration>
               <skip>${skipSigning}</skip>
-              <keyname>805A9DCB</keyname>
+              <keyname>66720976</keyname>
               <gpgArguments>
                 <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>
@@ -145,8 +146,8 @@
   </build>
 
   <scm>
-    <connection>scm:git:git://github.com/lokesh771988/CSTesting-Java.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/lokesh771988/CSTesting-Java.git</developerConnection>
-    <url>https://github.com/lokesh771988/CSTesting-Java</url>
+    <connection>scm:git:git://github.com/cstesttool/CSTesting-Java.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/cstesttool/CSTesting-Java.git</developerConnection>
+    <url>https://github.com/cstesttool/CSTesting-Java</url>
   </scm>
 </project>

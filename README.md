@@ -1,6 +1,6 @@
 # CSTesting Java Client
 
-**Repo:** [github.com/lokesh771988/CSTesting-Java](https://github.com/lokesh771988/CSTesting-Java)
+**Repo:** [github.com/cstesttool/CSTesting-Java](https://github.com/cstesttool/CSTesting-Java)
 
 CSTesting for Java is **our own tool** that works like [Playwright for Java](https://github.com/microsoft/playwright-java): **no Playwright dependency, no npx, no Node server.** When you use **useChromeDirect** (default), the client launches Chrome via the **Chrome DevTools Protocol (CDP)** — pure Java, using your system Chrome.
 
@@ -94,7 +94,7 @@ Then in another project:
 
 ```xml
 <dependency>
-  <groupId>io.github.lokesh771988</groupId>
+  <groupId>io.github.cstesttool</groupId>
   <artifactId>cstesting-java</artifactId>
   <version>0.1.0</version>
 </dependency>

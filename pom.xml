@@ -6,7 +6,7 @@
 
   <groupId>io.github.cstesttool</groupId>
   <artifactId>cstesting-java</artifactId>
-  <version>0.1.4</version>
+  <version>0.1.5</version>
   <packaging>jar</packaging>
   <name>CSTesting Java Client</name>
   <description>Java client for CSTesting browser automation (connects to Node server).</description>
@@ -44,9 +44,45 @@
     <maven.compiler.source>11</maven.compiler.source>
     <maven.compiler.target>11</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <!-- Set to false when publishing to Maven Central (requires GPG). Skip when keyboxd/agent is not running. -->
+    <!-- false = sign artifacts (required for Maven Central). true = skip signing (default for local builds). -->
     <skipSigning>true</skipSigning>
   </properties>
+
+  <profiles>
+    <!-- Use: mvn clean deploy -Prelease -Dgpg.passphrase=YOUR_PASSPHRASE -->
+    <profile>
+      <id>release</id>
+      <properties>
+        <skipSigning>false</skipSigning>
+      </properties>
+    </profile>
+    <!-- Run annotation tests: mvn exec:java -Pannotation-tests -->
+    <profile>
+      <id>annotation-tests</id>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>exec-maven-plugin</artifactId>
+            <version>3.1.1</version>
+            <executions>
+              <execution>
+                <id>run-annotation-tests</id>
+                <phase>none</phase>
+                <goals><goal>java</goal></goals>
+                <configuration>
+                  <mainClass>com.cstesting.runner.CSTestingRunner</mainClass>
+                  <arguments>
+                    <argument>com.cstesting.example.AnnotationTestExample</argument>
+                  </arguments>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
   <dependencies>
     <dependency>
@@ -126,6 +162,7 @@
             <configuration>
               <skip>${skipSigning}</skip>
               <keyname>66720976</keyname>
+              <passphrase>${gpg.passphrase}</passphrase>
               <gpgArguments>
                 <arg>--pinentry-mode</arg>
                 <arg>loopback</arg>

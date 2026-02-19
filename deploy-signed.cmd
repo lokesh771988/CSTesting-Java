@@ -20,6 +20,6 @@ if exist target (
     timeout /t 1 /nobreak >nul
 )
 
-echo Running: mvn clean deploy -DskipSigning=false -Dgpg.passphrase=***
-call mvn clean deploy -DskipSigning=false -Dgpg.passphrase=%GPG_PASSPHRASE%
+echo Running: mvn clean deploy -Prelease -Dgpg.passphrase=***
+call mvn clean deploy -Prelease -Dgpg.passphrase=%GPG_PASSPHRASE%
 exit /b %ERRORLEVEL%

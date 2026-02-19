@@ -19,6 +19,6 @@ if (Test-Path target) {
     Start-Sleep -Seconds 1
 }
 
-Write-Host "Running: mvn clean deploy -DskipSigning=false" -ForegroundColor Green
-& mvn clean deploy -DskipSigning=false "-Dgpg.passphrase=$Passphrase"
+Write-Host "Running: mvn clean deploy -Prelease" -ForegroundColor Green
+& mvn clean deploy -Prelease "-Dgpg.passphrase=$Passphrase"
 exit $LASTEXITCODE

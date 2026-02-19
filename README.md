@@ -2,9 +2,116 @@
 
 **Repo:** [github.com/cstesttool/CSTesting-Java](https://github.com/cstesttool/CSTesting-Java)
 
-CSTesting for Java is **our own tool** that works like [Playwright for Java](https://github.com/microsoft/playwright-java): **no Playwright dependency, no npx, no Node server.** When you use **useChromeDirect** (default), the client launches Chrome via the **Chrome DevTools Protocol (CDP)** — pure Java, using your system Chrome.
+---
 
-## Prerequisites
+## Installation
+
+### Introduction
+
+CSTesting for Java is a browser automation library designed for end-to-end testing and scripting. It drives **Chrome** via the **Chrome DevTools Protocol (CDP)** — no Playwright, no npx, no Node server. Run tests on Windows, Linux, and macOS, locally or on CI, headless or headed.
+
+CSTesting is distributed as a Maven artifact. The easiest way to use it is to add one dependency to your project's `pom.xml` as described below. If you're not familiar with Maven, please refer to its [documentation](https://maven.apache.org/guides/).
+
+### Usage
+
+Get started by adding the dependency and running the example below.
+
+**pom.xml** (add the dependency):
+
+```xml
+<dependency>
+  <groupId>io.github.cstesttool</groupId>
+  <artifactId>cstesting-java</artifactId>
+  <version>0.1.4</version>
+</dependency>
+```
+
+**App.java** (`src/main/java/org/example/App.java`):
+
+```java
+package org.example;
+
+import com.cstesting.CSTesting;
+import com.cstesting.CSTestingBrowser;
+import com.cstesting.CSTestingOptions;
+
+public class App {
+    public static void main(String[] args) {
+        CSTestingBrowser browser = CSTesting.createBrowser(
+            CSTestingOptions.builder().headless(true).build()
+        );
+        try {
+            browser.gotoUrl("https://example.com");
+            System.out.println(browser.title());
+        } finally {
+            browser.close();
+        }
+    }
+}
+```
+
+Compile and run:
+
+```bash
+mvn compile exec:java -Dexec.mainClass="org.example.App"
+```
+
+No browser binaries are downloaded — CSTesting uses your system Chrome. To use a custom Chrome path, set `-Dcstesting.chrome.path=/path/to/chrome`.
+
+### First script
+
+In this script we navigate to a page and take a screenshot (requires a small helper to save the page as PNG; here we use the title and URL as the “result”):
+
+```java
+package org.example;
+
+import com.cstesting.CSTesting;
+import com.cstesting.CSTestingBrowser;
+import com.cstesting.CSTestingOptions;
+
+public class App {
+    public static void main(String[] args) {
+        CSTestingBrowser browser = CSTesting.createBrowser(
+            CSTestingOptions.builder().headless(true).build()
+        );
+        try {
+            browser.gotoUrl("https://example.com");
+            browser.waitForLoad(5_000);
+            System.out.println("Title: " + browser.title());
+            System.out.println("URL: " + browser.url());
+            browser.locator("h1").getTextContent();  // example interaction
+        } finally {
+            browser.close();
+        }
+    }
+}
+```
+
+By default, the browser runs in headless mode. To see the browser window, set `headless(false)`:
+
+```java
+CSTestingBrowser browser = CSTesting.createBrowser(
+    CSTestingOptions.builder().headless(false).build()
+);
+```
+
+### Running the example
+
+```bash
+mvn compile exec:java -Dexec.mainClass="org.example.App"
+```
+
+Browsers launched with CSTesting run headless by default (no visible window). Pass `CSTestingOptions.builder().headless(false).build()` to show the browser UI.
+
+### System requirements
+
+- **Java 11 or higher**
+- **Chrome** installed (used via CDP). On Windows: typical Chrome install path. On macOS: `/Applications/Google Chrome.app`. On Linux: `google-chrome` or `chromium`. Override with `-Dcstesting.chrome.path=/path/to/chrome` if needed.
+- **OS:** Windows 10+, macOS 10.14+, or Linux (e.g. Debian, Ubuntu) on x86-64 or arm64.
+
+---
+
+## Prerequisites (summary)
 
 - **Java 11+**
 - **Chrome** installed (used via CDP when `useChromeDirect` is true). Override path with `-Dcstesting.chrome.path=/path/to/chrome` if needed.
@@ -126,6 +233,326 @@ CSTestingBrowser browser = CSTesting.createBrowser(
     CSTestingOptions.builder().serverUrl("ws://localhost:9274").build()
 );
 ```
+
+---
+
+## Writing tests
+
+### Introduction
+
+CSTesting assertions are designed for the dynamic web. Use **`assertThat()`** for page-level checks (title, URL) and **`assertThat(locator)`** for element-level checks (visible, attribute, text, value). Assertions throw **`AssertionError`** on failure. Use **`waitForSelector`**, **`waitForLoad`**, or **`waitForURL`** when you need to wait for conditions before asserting or acting.
+
+The example below shows how to write a test using assertions, locators, and selectors.
+
+```java
+package org.example;
+
+import com.cstesting.CSTesting;
+import com.cstesting.CSTestingBrowser;
+import com.cstesting.CSTestingOptions;
+
+public class App {
+    public static void main(String[] args) {
+        CSTestingBrowser browser = CSTesting.createBrowser(
+            CSTestingOptions.builder().headless(true).build()
+        );
+        try {
+            browser.gotoUrl("https://example.com");
+
+            // Expect the page title to contain a substring.
+            browser.assertThat().hasTitle("Example");
+
+            // Create a locator and expect an attribute to match.
+            var link = browser.locator("a").first();
+            browser.assertThat(link).hasAttribute("href");
+
+            // Click the link (e.g. "More information...").
+            link.click();
+
+            // Wait for navigation and expect a heading to be visible.
+            browser.waitForLoad(5_000);
+            browser.assertThat(browser.locator("h1")).isVisible();
+        } finally {
+            browser.close();
+        }
+    }
+}
+```
+
+### Assertions
+
+Use **`browser.assertThat()`** for the page and **`browser.assertThat(locator)`** for elements. Assertions are fluent and throw `AssertionError` if the condition is not met.
+
+**Page assertions:**
+
+```java
+// Title contains or equals the expected string.
+browser.assertThat().hasTitle("Example Domain");
+
+// URL contains the string or matches a pattern (use * as wildcard).
+browser.assertThat().hasURL("https://example.com");
+browser.assertThat().hasURL("**/example*");
+```
+
+**Element assertions:**
+
+```java
+// Visibility and state.
+browser.assertThat(browser.locator("button")).isVisible();
+browser.assertThat(browser.locator("#name")).isEditable();
+browser.assertThat(browser.locator("input")).isEnabled();
+browser.assertThat(browser.locator("[disabled]")).isDisabled();
+
+// Text and value.
+browser.assertThat(browser.locator("h1")).hasText("Example");
+browser.assertThat(browser.locator("h1")).containText("Example");
+browser.assertThat(browser.locator("#search")).hasValue("query");
+browser.assertThat(browser.locator("#search")).containValue("query");
+
+// Attributes.
+browser.assertThat(browser.locator("a").first()).hasAttribute("href");
+browser.assertThat(browser.locator("a").first()).hasAttribute("href", "https://example.com");
+
+// Count of matching elements.
+browser.assertThat(browser.locator("button")).count(3);
+browser.assertThat(browser.locator("li")).hasCount(5);
+```
+
+### Locators
+
+Locators represent a way to find element(s) on the page. Create them with **`browser.locator(selector)`** and use them for actions (`.click()`, `.type()`, etc.) and assertions. If the selector matches **multiple** elements, use **`.first()`**, **`.last()`**, or **`.nth(index)`** before performing an action.
+
+**Selector formats:** CSS (default), XPath (`//button` or `xpath=//button`), `id=value`, `name=value`, or any `attr=value`.
+
+```java
+// By text (XPath).
+var getStarted = browser.locator("//a[contains(.,'Get Started')]").first();
+browser.assertThat(getStarted).hasAttribute("href", "/docs/intro");
+getStarted.click();
+
+// By CSS or id/name.
+browser.assertThat(browser.locator("h1")).isVisible();
+browser.assertThat(browser.locator("id=submit")).isEnabled();
+browser.locator("name=email").type("user@example.com");
+```
+
+See [Locators](#locators) for the full list of selector formats and locator methods.
+
+### Test isolation
+
+Create a **new browser** for each test so that tests do not share state (cookies, storage, or tabs). Open the browser at the start of the test and close it in a `finally` block (or use try-with-resources if you wrap the API).
+
+```java
+public void testLogin() {
+    CSTestingBrowser browser = CSTesting.createBrowser(
+        CSTestingOptions.builder().headless(true).build()
+    );
+    try {
+        browser.gotoUrl("https://example.com/login");
+        browser.locator("name=user").type("alice");
+        browser.locator("name=pass").type("secret");
+        browser.locator("button[type=submit]").click();
+        browser.assertThat().hasURL("**/welcome");
+    } finally {
+        browser.close();
+    }
+}
+```
+
+Each test that creates its own browser gets a clean profile and does not interfere with others.
+
+### Annotations (TestNG-style)
+
+CSTesting provides annotations and a runner so you can write tests in a TestNG-like style: **`@CSTest`**, **`@BeforeSuite`**, **`@AfterSuite`**, **`@BeforeClass`**, **`@AfterClass`**, **`@BeforeMethod`**, **`@AfterMethod`**. Extend **`CSTestingTestBase`** to get a **`browser`** field injected before each test, then run the class with **`CSTestingRunner.run(YourTestClass.class)`**.
+
+**Annotations:**
+
+| Annotation      | When it runs |
+|-----------------|--------------|
+| `@BeforeSuite`  | Once before the entire run (before any class or test; no browser yet). |
+| `@AfterSuite`   | Once after the entire run (after all tests and @AfterClass; browser already closed). |
+| `@BeforeClass`  | Once before any test in the class (no browser yet). |
+| `@AfterClass`   | Once after all tests in the class (browser already closed). |
+| `@BeforeMethod` | Before each `@CSTest` method (browser is set). |
+| `@AfterMethod`  | After each `@CSTest` method (browser still open). |
+| `@CSTest`       | The test method. |
+
+**Execution order:** `@BeforeSuite` → `@BeforeClass` → (for each test: `@BeforeMethod` → `@CSTest` → `@AfterMethod`) → `@AfterClass` → `@AfterSuite`.
+
+**Example:**
+
+```java
+import com.cstesting.annotations.*;
+import com.cstesting.runner.CSTestingRunner;
+import com.cstesting.runner.CSTestingTestBase;
+
+public class MyTest extends CSTestingTestBase {
+
+    @BeforeMethod
+    public void setUp() {
+        // browser is already created and set
+    }
+
+    @AfterMethod
+    public void tearDown() {
+        // runs before browser is closed
+    }
+
+    @CSTest(description = "Check example.com title")
+    public void testTitle() {
+        browser.gotoUrl("https://example.com");
+        browser.assertThat().hasTitle("Example");
+    }
+
+    @CSTest
+    public void testHeading() {
+        browser.gotoUrl("https://example.com");
+        browser.assertThat(browser.locator("h1")).isVisible();
+    }
+}
+// Run: mvn exec:java -Dexec.mainClass="com.cstesting.runner.CSTestingRunner" -Dexec.args="com.example.MyTest"
+```
+
+**Run the tests** (no `main()` needed in the test class):
+
+```bash
+mvn exec:java -Dexec.mainClass="com.cstesting.runner.CSTestingRunner" -Dexec.args="com.example.MyTest"
+```
+
+Or from code: `CSTestingRunner.run(MyTest.class);`. To use a visible browser, override **`getBrowserOptions()`** in your test class:
+
+```java
+@Override
+protected CSTestingOptions getBrowserOptions() {
+    return CSTestingOptions.builder().headless(false).build();
+}
+```
+
+---
+
+## Actions
+
+### Introduction
+
+CSTesting can interact with HTML elements such as text inputs, checkboxes, radio buttons, select options, mouse clicks (click, double-click, right-click), typing text, hover, and drag-and-drop. Use **locators** (e.g. `browser.locator("selector")`) to target elements; all actions accept either a selector string or a `Locator`. When multiple elements match, use `.first()`, `.last()`, or `.nth(index)` before performing an action.
+
+### Text input
+
+**`type(selector, text)`** or **`locator.type(text)`** is the main way to fill form fields. It focuses the element, clears any existing value, and types the given text. It works for `<input>`, `<textarea>`, and similar elements.
+
+```java
+// By selector
+browser.type("id=username", "Peter");
+browser.type("name=email", "user@example.com");
+
+// By locator (chain with first() if multiple match)
+browser.locator("id=username").type("Peter");
+browser.locator("[name='Birth date']").type("2020-02-02");
+browser.locator("textarea").first().type("Hello");
+```
+
+### Checkboxes and radio buttons
+
+Use **`check(selector)`** / **`check(Locator)`** to check a checkbox or select a radio button, and **`uncheck(selector)`** / **`uncheck(Locator)`** to uncheck. Works with `input[type=checkbox]` and `input[type=radio]`. No-op if the element is already in the desired state.
+
+```java
+// Check the checkbox
+browser.locator("id=agree").check();
+browser.check("name=subscribe");
+
+// Assert the checked state
+browser.assertThat(browser.locator("name=subscribe")).isVisible();  // or use isSelected via getValue/evaluate if needed
+
+// Select a radio button
+browser.locator("id=size-xl").check();
+browser.check("name=size");  // if only one with name=size; otherwise use locator("name=size").nth(1).check()
+```
+
+### Select options
+
+Use **`select(selector, option)`** for a single-select dropdown and **`selectOptions(selector, options...)`** for one or more options (single or multi-select). Option can be a **value**, **visible label**, or **0-based index** (Integer). Use **`deselectOptions`** to clear options in a multi-select.
+
+```java
+// Single selection by value or label
+browser.locator("#color").select("blue");
+browser.locator("#color").select("Blue");   // label
+
+// Single selection by index
+browser.locator("#color").select(2);
+
+// Multi-select
+browser.locator("#colors").selectOptions("red", "green", "blue");
+browser.locator("#colors").selectOptions(0, 2, 4);
+
+// Deselect
+browser.locator("#colors").deselectOptions("blue");
+
+// Read selected
+List<String> values = browser.getSelectedValues(browser.locator("#colors"));
+List<String> labels = browser.getSelectedLabels(browser.locator("#colors"));
+```
+
+### Mouse click
+
+**`click(selector)`** / **`click(Locator)`** performs a left click. **`doubleClick`** and **`rightClick`** are also available. **`hover(selector)`** / **`hover(Locator)`** moves the mouse to the element. Actions use the **center** of the element.
+
+```java
+// Generic click
+browser.locator("button").click();
+browser.click("id=submit");
+
+// Double click
+browser.locator("text=Item").doubleClick();
+browser.doubleClick("#item");
+
+// Right click (context menu)
+browser.locator("text=Item").rightClick();
+browser.rightClick("#row");
+
+// Hover
+browser.locator("#menu").hover();
+```
+
+Under the hood, actions (when using the CDP implementation) scroll the element into view and wait for it to be visible before performing the click or other action.
+
+### Type characters
+
+Use **`type(selector, text)`** or **`locator.type(text)`** to enter text. This replaces the current value (like a “fill”). For character-by-character input or special key events, use **`evaluate()`** to run JavaScript (e.g. dispatch `KeyboardEvent`) if your app relies on key-level handling.
+
+```java
+browser.locator("#area").type("Hello World!");
+```
+
+### Drag and drop
+
+Use **`dragAndDrop(fromSelector, toSelector)`** or **`fromLocator.dragAndDrop(toLocator)`** to drag one element to another. The action moves the mouse to the source, presses the button, moves to the target, and releases.
+
+```java
+browser.dragAndDrop("#source", "#target");
+browser.locator(".card").first().dragAndDrop(browser.locator(".drop-zone"));
+```
+
+### Scrolling
+
+CSTesting scrolls the target element into view before actions like click when needed. For explicit scrolling, use:
+
+- **`scrollToPageTop()`** / **`scrollToPageBottom()`** – scroll to top or bottom of the page.
+- **`scrollUp()`** / **`scrollDown()`** – scroll by one viewport height.
+- **`scrollBy(dx, dy)`** – scroll by a pixel offset (e.g. `scrollBy(0, 300)` to scroll down 300px).
+- **`scrollToSelector(selector)`** / **`locator.scrollToSelector()`** – scroll until the element is in view (centered).
+
+```java
+// Scroll so the button is visible, then click
+browser.scrollToSelector("#submit");
+browser.locator("#submit").click();
+
+// Scroll the page
+browser.scrollToPageBottom();
+browser.scrollBy(0, 300);
+browser.locator("#footer").scrollToSelector();   // scroll element into view
+```
+
+For more scrolling options, see [Scrolling](#scrolling).
 
 ---
 

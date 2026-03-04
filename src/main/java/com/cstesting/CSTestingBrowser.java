@@ -45,6 +45,9 @@ public interface CSTestingBrowser {
 
     void type(Locator locator, String text);
 
+    /** Press a single key (e.g. "Enter", "Tab", "Backspace", "Escape"). Dispatches to the focused element or page. */
+    void pressKey(String key);
+
     /**
      * Select one option in a single-select dropdown.
      * Option can be String (value or visible label) or Integer (0-based index).
@@ -110,6 +113,21 @@ public interface CSTestingBrowser {
 
     /** Fixed delay in milliseconds. Use for explicit pauses (e.g. waitForTime(5000)). */
     void waitForTime(long millis);
+
+    /** Alias for {@link #waitForTime(long)} – fixed delay in milliseconds. */
+    default void sleep(long millis) {
+        waitForTime(millis);
+    }
+
+    /**
+     * Convenience locator for an element with the given attribute value: [attr="value"].
+     * Use for data-testid, aria-*, or any attribute. Value is escaped for CSS.
+     */
+    default Locator getByAttribute(String attr, String value) {
+        if (attr == null || attr.isBlank()) throw new IllegalArgumentException("attr cannot be null or blank");
+        String escaped = value != null ? value.replace("\\", "\\\\").replace("\"", "\\\"") : "";
+        return locator("[" + attr + "=\"" + escaped + "\"]");
+    }
 
     /** Scroll to the top of the page. */
     void scrollToPageTop();
@@ -207,6 +225,23 @@ public interface CSTestingBrowser {
      * All open tabs as separate browser instances. Use any reference without switching (Playwright-style).
      */
     java.util.List<CSTestingBrowser> getPages();
+
+    /**
+     * Wait for a new tab to appear (e.g. after a click that opens a link in a new tab). Returns a browser for the new tab.
+     * Timeout in ms; null = default (e.g. 30s). Throws if no new tab within timeout.
+     */
+    CSTestingBrowser waitForNewTab(Integer timeoutMs);
+
+    /**
+     * Capture a screenshot of the page. Returns PNG bytes. Use {@link #getScreenshot(ScreenshotOptions)} for options.
+     */
+    byte[] getScreenshot();
+
+    /**
+     * Capture a screenshot with options (path, fullPage, selector/locator, format, quality).
+     * If path is set, bytes are also written to the file. Returns the screenshot bytes.
+     */
+    byte[] getScreenshot(ScreenshotOptions options);
 
     /**
      * Create a locator for the given selector. Supports CSS, XPath ({@code xpath=//...} or {@code //...}),

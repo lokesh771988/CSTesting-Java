@@ -141,6 +141,11 @@ public final class ReportingBrowser implements CSTestingBrowser {
     }
 
     @Override
+    public void pressKey(String key) {
+        record("pressKey", key != null ? key : "", () -> delegate.pressKey(key));
+    }
+
+    @Override
     public void select(String selector, Object option) {
         record("select", (selector != null ? selector : "") + " | " + option,
             () -> delegate.select(selector, option));
@@ -254,6 +259,11 @@ public final class ReportingBrowser implements CSTestingBrowser {
     @Override
     public void waitForTime(long millis) {
         record("waitForTime", millis + "ms", () -> delegate.waitForTime(millis));
+    }
+
+    @Override
+    public void sleep(long millis) {
+        record("sleep", millis + "ms", () -> delegate.sleep(millis));
     }
 
     @Override
@@ -440,6 +450,23 @@ public final class ReportingBrowser implements CSTestingBrowser {
         return pages.stream()
             .map(p -> (CSTestingBrowser) new ReportingBrowser(p, report))
             .collect(Collectors.toList());
+    }
+
+    @Override
+    public CSTestingBrowser waitForNewTab(Integer timeoutMs) {
+        return record("waitForNewTab", timeoutMs != null ? timeoutMs + "ms" : "",
+            () -> new ReportingBrowser(delegate.waitForNewTab(timeoutMs), report));
+    }
+
+    @Override
+    public byte[] getScreenshot() {
+        return record("getScreenshot", "", (java.util.function.Supplier<byte[]>) delegate::getScreenshot);
+    }
+
+    @Override
+    public byte[] getScreenshot(com.cstesting.ScreenshotOptions options) {
+        return record("getScreenshot", options != null && options.getPath() != null ? options.getPath() : "options",
+            () -> delegate.getScreenshot(options));
     }
 
     @Override

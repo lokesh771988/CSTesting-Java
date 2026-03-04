@@ -1,5 +1,9 @@
 package com.cstesting;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
 /**
  * Options for creating a CSTesting browser session.
  * Either start the Node server automatically or connect to an existing server.
@@ -10,12 +14,18 @@ public final class CSTestingOptions {
     private final int port;
     private final String serverUrl;
     private final boolean useChromeDirect;
+    private final List<String> args;
+    private final String userDataDir;
+    private final String chromePath;
 
     private CSTestingOptions(Builder b) {
         this.headless = b.headless;
         this.port = b.port;
         this.serverUrl = b.serverUrl;
         this.useChromeDirect = b.useChromeDirect;
+        this.args = b.args != null ? Collections.unmodifiableList(new ArrayList<>(b.args)) : Collections.emptyList();
+        this.userDataDir = b.userDataDir;
+        this.chromePath = b.chromePath;
     }
 
     public static Builder builder() {
@@ -35,9 +45,24 @@ public final class CSTestingOptions {
         return serverUrl;
     }
 
-    /** If true, launch Chrome via Selenium (no Node.js or CSTesting server required). */
+    /** If true, launch Chrome via CDP (no Node.js or CSTesting server required). */
     public boolean isUseChromeDirect() {
         return useChromeDirect;
+    }
+
+    /** Extra Chrome command-line arguments (e.g. "--disable-gpu"). Empty if not set. */
+    public List<String> getArgs() {
+        return args;
+    }
+
+    /** Custom Chrome user data directory; null = use temp dir. */
+    public String getUserDataDir() {
+        return userDataDir;
+    }
+
+    /** Path to Chrome/Chromium executable; null = auto-detect. */
+    public String getChromePath() {
+        return chromePath;
     }
 
     public static final class Builder {
@@ -45,6 +70,9 @@ public final class CSTestingOptions {
         private int port = 9274;
         private String serverUrl;
         private boolean useChromeDirect = true;
+        private List<String> args;
+        private String userDataDir;
+        private String chromePath;
 
         public Builder headless(boolean headless) {
             this.headless = headless;
@@ -61,9 +89,34 @@ public final class CSTestingOptions {
             return this;
         }
 
-        /** Use Chrome directly via Selenium (no Node.js or CSTesting server). Requires Chrome browser installed. */
+        /** Use Chrome directly via CDP (no Node.js or CSTesting server). Requires Chrome browser installed. */
         public Builder useChromeDirect(boolean useChromeDirect) {
             this.useChromeDirect = useChromeDirect;
+            return this;
+        }
+
+        /** Add a Chrome command-line argument (e.g. "--disable-gpu"). */
+        public Builder addArg(String arg) {
+            if (args == null) args = new ArrayList<>();
+            args.add(arg);
+            return this;
+        }
+
+        /** Set Chrome command-line arguments. Replaces any previously set. */
+        public Builder args(List<String> args) {
+            this.args = args != null ? new ArrayList<>(args) : null;
+            return this;
+        }
+
+        /** Set Chrome user data directory (default: temp dir). */
+        public Builder userDataDir(String userDataDir) {
+            this.userDataDir = userDataDir;
+            return this;
+        }
+
+        /** Set path to Chrome/Chromium executable (default: auto-detect). */
+        public Builder chromePath(String chromePath) {
+            this.chromePath = chromePath;
             return this;
         }
 

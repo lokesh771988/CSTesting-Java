@@ -6,7 +6,7 @@
 
   <groupId>io.github.cstesttool</groupId>
   <artifactId>cstesting-java</artifactId>
-  <version>0.1.5</version>
+  <version>0.1.6</version>
   <packaging>jar</packaging>
   <name>CSTesting Java Client</name>
   <description>Java client for CSTesting browser automation (connects to Node server).</description>
@@ -161,6 +161,7 @@
             <goals><goal>sign</goal></goals>
             <configuration>
               <skip>${skipSigning}</skip>
+              <!-- Key ID 66720976: change passphrase with gpg --change-passphrase 66720976 -->
               <keyname>66720976</keyname>
               <passphrase>${gpg.passphrase}</passphrase>
               <gpgArguments>

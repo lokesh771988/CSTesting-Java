@@ -9,3 +9,11 @@ target/
 .project
 .classpath
 .DS_Store
+
+# Local env / secrets (never commit passphrases or tokens)
+.env
+.env.local
+.env.*.local
+*.secret
+secrets/
+docs/

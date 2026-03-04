@@ -13,7 +13,10 @@ import com.cstesting.annotations.CSTest;
 
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Runs test classes that use CSTesting annotations ({@link CSTest}, {@link BeforeSuite}, {@link AfterSuite},
@@ -57,11 +60,16 @@ public final class CSTestingRunner {
 
     /** Run all @CSTest methods in the given test class with default (headless) options. */
     public static void run(Class<?> testClass) {
-        run(testClass, CSTestingOptions.builder().headless(true).build());
+        run(testClass, RunOptions.builder().build());
     }
 
-    /** Run all @CSTest methods in the given test class with the provided options. */
+    /** Run all @CSTest methods in the given test class with the provided browser options. */
     public static void run(Class<?> testClass, CSTestingOptions options) {
+        run(testClass, RunOptions.builder().browserOptions(options).build());
+    }
+
+    /** Run @CSTest methods in the given test class with the provided run options (tags filter, browser options). */
+    public static void run(Class<?> testClass, RunOptions runOptions) {
         Object instance;
         try {
             instance = testClass.getDeclaredConstructor().newInstance();
@@ -69,9 +77,14 @@ public final class CSTestingRunner {
             throw new RuntimeException("Could not instantiate test class " + testClass.getName(), e);
         }
 
-        CSTestingOptions effectiveOptions = options;
-        if (instance instanceof CSTestingTestBase) {
+        CSTestingOptions effectiveOptions = runOptions != null && runOptions.getBrowserOptions() != null
+            ? runOptions.getBrowserOptions()
+            : null;
+        if (effectiveOptions == null && instance instanceof CSTestingTestBase) {
             effectiveOptions = ((CSTestingTestBase) instance).getBrowserOptions();
+        }
+        if (effectiveOptions == null) {
+            effectiveOptions = CSTestingOptions.builder().headless(true).build();
         }
 
         List<Method> beforeSuite = findMethods(testClass, BeforeSuite.class);
@@ -81,6 +94,10 @@ public final class CSTestingRunner {
         List<Method> beforeMethod = findMethods(testClass, BeforeMethod.class);
         List<Method> afterMethod = findMethods(testClass, AfterMethod.class);
         List<Method> tests = findMethods(testClass, CSTest.class);
+        if (runOptions != null && runOptions.getTags() != null && !runOptions.getTags().isEmpty()) {
+            Set<String> filterTags = runOptions.getTags();
+            tests = filterTestsByTags(tests, filterTags);
+        }
 
         try {
             invokeAll(instance, beforeSuite);
@@ -98,6 +115,7 @@ public final class CSTestingRunner {
         for (Method testMethod : tests) {
             CSTestingBrowser browser = null;
             try {
+                if (instance instanceof CSTestingTestBase) ((CSTestingTestBase) instance).clearSteps();
                 browser = CSTesting.createBrowser(effectiveOptions);
                 injectBrowser(instance, browser);
                 invokeAll(instance, beforeMethod);
@@ -139,6 +157,23 @@ public final class CSTestingRunner {
         if (failed > 0) {
             throw new AssertionError(failed + " test(s) failed");
         }
+    }
+
+    private static List<Method> filterTestsByTags(List<Method> tests, Set<String> filterTags) {
+        List<Method> out = new ArrayList<>();
+        for (Method m : tests) {
+            CSTest ann = m.getAnnotation(CSTest.class);
+            if (ann == null) continue;
+            String[] tags = ann.tags();
+            if (tags == null || tags.length == 0) continue;
+            for (String t : tags) {
+                if (t != null && filterTags.contains(t)) {
+                    out.add(m);
+                    break;
+                }
+            }
+        }
+        return out;
     }
 
     private static List<Method> findMethods(Class<?> clazz, Class<? extends java.lang.annotation.Annotation> annotation) {

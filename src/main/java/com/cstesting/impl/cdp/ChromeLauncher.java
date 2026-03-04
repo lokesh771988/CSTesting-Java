@@ -28,17 +28,27 @@ final class ChromeLauncher {
     private static final int DEBUG_PORT = 9222;
 
     static LaunchResult launch(boolean headless) {
-        String chromePath = System.getProperty("cstesting.chrome.path");
-        if (chromePath == null || chromePath.isEmpty()) {
-            chromePath = findChrome();
+        return launch(headless, null, null, null);
+    }
+
+    /**
+     * Launch Chrome with optional extra args, user data dir, and executable path.
+     * Used when CSTestingOptions provides args/userDataDir/chromePath (e.g. from CDP flow).
+     */
+    static LaunchResult launch(boolean headless, List<String> extraArgs, String userDataDir, String chromePath) {
+        String exe = chromePath != null && !chromePath.isEmpty()
+            ? chromePath
+            : System.getProperty("cstesting.chrome.path");
+        if (exe == null || exe.isEmpty()) {
+            exe = findChrome();
         }
-        if (chromePath == null) {
+        if (exe == null) {
             throw new RuntimeException(
                 "Chrome not found. Install Chrome or set -Dcstesting.chrome.path=/path/to/chrome");
         }
 
         List<String> args = new ArrayList<>();
-        args.add(chromePath);
+        args.add(exe);
         args.add("--remote-debugging-port=" + DEBUG_PORT);
         args.add("--no-first-run");
         args.add("--no-default-browser-check");
@@ -46,15 +56,22 @@ final class ChromeLauncher {
         args.add("--disable-sync");
         args.add("--disable-translate");
         args.add("--disable-extensions");
-        args.add("--disable-popup-blocking");   // allow new tabs/windows opened by script or clicks
+        args.add("--disable-popup-blocking");
         args.add("--metrics-recording-only");
         args.add("--mute-audio");
-        try {
-            File tmpDir = File.createTempFile("cstesting-chrome-", "");
-            tmpDir.delete();
-            tmpDir.mkdirs();
-            args.add("--user-data-dir=" + tmpDir.getAbsolutePath());
-        } catch (Exception ignored) {}
+        if (userDataDir != null && !userDataDir.isEmpty()) {
+            args.add("--user-data-dir=" + userDataDir);
+        } else {
+            try {
+                File tmpDir = File.createTempFile("cstesting-chrome-", "");
+                tmpDir.delete();
+                tmpDir.mkdirs();
+                args.add("--user-data-dir=" + tmpDir.getAbsolutePath());
+            } catch (Exception ignored) {}
+        }
+        if (extraArgs != null) {
+            for (String a : extraArgs) args.add(a);
+        }
         if (headless) {
             args.add("--headless=new");
             args.add("--disable-gpu");

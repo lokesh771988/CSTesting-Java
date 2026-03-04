@@ -137,6 +137,16 @@ public final class Locator {
         return browser.getTextContent(this);
     }
 
+    /** Take a screenshot of the element(s) targeted by this locator. Returns PNG bytes. */
+    public byte[] screenshot() {
+        return browser.getScreenshot(com.cstesting.ScreenshotOptions.builder().locator(this).build());
+    }
+
+    /** Take a screenshot of the element(s) targeted by this locator and optionally save to path. Returns PNG bytes. */
+    public byte[] screenshot(String path) {
+        return browser.getScreenshot(com.cstesting.ScreenshotOptions.builder().locator(this).path(path).build());
+    }
+
     public String getResolvedSelector() {
         return resolvedSelector;
     }

@@ -10,9 +10,14 @@ import com.google.gson.JsonObject;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.Base64;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 /**
  * Implementation that sends JSON commands to the CSTesting Node server.
@@ -136,6 +141,11 @@ final class CSTestingBrowserImpl implements CSTestingBrowser {
         Map<String, Object> params = new HashMap<>();
         params.put("text", text);
         sendLocator("type", locator, params);
+    }
+
+    @Override
+    public void pressKey(String key) {
+        send("pressKey", Map.of("key", key != null ? key : ""));
     }
 
     @Override
@@ -551,6 +561,53 @@ final class CSTestingBrowserImpl implements CSTestingBrowser {
     @Override
     public java.util.List<CSTestingBrowser> getPages() {
         return java.util.Collections.singletonList(this);
+    }
+
+    @Override
+    public CSTestingBrowser waitForNewTab(Integer timeoutMs) {
+        int timeout = timeoutMs != null ? timeoutMs : 30_000;
+        long deadline = System.currentTimeMillis() + timeout;
+        Set<String> initial = new HashSet<>(getWindowHandles());
+        while (System.currentTimeMillis() < deadline) {
+            List<String> current = getWindowHandles();
+            for (String h : current) {
+                if (!initial.contains(h)) {
+                    switchToWindow(h);
+                    return this;
+                }
+            }
+            try { Thread.sleep(100); } catch (InterruptedException e) { Thread.currentThread().interrupt(); throw new RuntimeException(e); }
+        }
+        throw new RuntimeException("Timeout waiting for new tab within " + timeout + "ms");
+    }
+
+    @Override
+    public byte[] getScreenshot() {
+        return getScreenshot((ScreenshotOptions) null);
+    }
+
+    @Override
+    public byte[] getScreenshot(ScreenshotOptions options) {
+        Map<String, Object> params = new HashMap<>();
+        if (options != null) {
+            if (options.getPath() != null) params.put("path", options.getPath());
+            if (options.isFullPage()) params.put("fullPage", true);
+            if (options.getSelector() != null) params.put("selector", options.getSelector());
+            if (options.getLocator() != null) {
+                params.put("selector", options.getLocator().getResolvedSelector());
+                if (options.getLocator().getIndex() != null) params.put("index", options.getLocator().getIndex());
+            }
+            if (options.getFormat() != null) params.put("format", options.getFormat());
+            if (options.getQuality() != null) params.put("quality", options.getQuality());
+        }
+        JsonObject res = send("getScreenshot", params);
+        String base64 = res.has("value") ? res.get("value").getAsString() : (res.has("bytes") ? res.get("bytes").getAsString() : null);
+        if (base64 == null) throw new RuntimeException("getScreenshot did not return value or bytes");
+        byte[] bytes = Base64.getDecoder().decode(base64);
+        if (options != null && options.getPath() != null) {
+            try { Files.write(Paths.get(options.getPath()), bytes); } catch (Exception e) { throw new RuntimeException("Failed to write screenshot to " + options.getPath(), e); }
+        }
+        return bytes;
     }
 
     @Override

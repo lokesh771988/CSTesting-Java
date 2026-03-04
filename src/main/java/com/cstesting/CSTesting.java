@@ -25,9 +25,9 @@ public final class CSTesting {
             return CSTestingBrowserImpl.connect(options.getServerUrl());
         }
         if (options.isUseChromeDirect()) {
-            return com.cstesting.impl.cdp.CSTestingBrowserCDP.create(options);
+            throw new UnsupportedOperationException("useChromeDirect is not available in this build; set serverUrl to connect to the CSTesting server.");
         }
-        throw new IllegalArgumentException("Set serverUrl to connect to an existing server, or useChromeDirect(true) to launch Chrome via CDP.");
+        throw new IllegalArgumentException("Set serverUrl to connect to an existing server.");
     }
 
     /**

@@ -12,4 +12,7 @@ import java.lang.annotation.RetentionPolicy;
 public @interface CSTest {
     /** Optional description for the test (e.g. for reports). */
     String description() default "";
+
+    /** Optional tags for filtering (e.g. run only tests with tag "smoke"). */
+    String[] tags() default {};
 }

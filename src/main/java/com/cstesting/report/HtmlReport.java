@@ -37,6 +37,8 @@ public final class HtmlReport {
     private String testName = "CSTesting Run";
     private final long startTime = System.currentTimeMillis();
     private final List<StepEntry> steps = new ArrayList<>();
+    /** When set (e.g. from config run), report summary shows "Failed at step: N". 0-based. */
+    private Integer failedStepIndex;
 
     public HtmlReport() {}
 
@@ -55,6 +57,12 @@ public final class HtmlReport {
     /** Records a failed step with an optional error message. */
     public HtmlReport recordFail(String action, String description, String errorMessage) {
         steps.add(new StepEntry(action, description, false, errorMessage));
+        return this;
+    }
+
+    /** Set the failed step index (0-based) when report is from a config run. Summary will show "Failed at step: N". */
+    public HtmlReport setFailedStepIndex(Integer failedStepIndex) {
+        this.failedStepIndex = failedStepIndex;
         return this;
     }
 
@@ -89,17 +97,21 @@ public final class HtmlReport {
                 .append(s.errorMessage != null ? escape(s.errorMessage) : "-").append("</td></tr>");
         }
 
+        String failedStepLine = (failedStepIndex != null && failedStepIndex >= 0)
+            ? "<span class=\"failed-step\">Failed at step: " + (failedStepIndex + 1) + "</span>\n"
+            : "";
         return "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n<meta name=\"viewport\" content=\"width=device-width,initial-scale=1\">\n"
             + "<title>" + escape(testName) + " - CSTesting Report</title>\n<style>\n"
             + "body{font-family:Segoe UI,Helvetica,Arial,sans-serif;margin:24px;background:#f5f5f5;}\n"
             + "h1{color:#333;margin:0 0 8px 0;}\n"
             + ".meta{color:#666;font-size:14px;margin-bottom:20px;}\n"
-            + ".summary{display:flex;gap:16px;margin-bottom:24px;}\n"
+            + ".summary{display:flex;flex-wrap:wrap;gap:16px;margin-bottom:24px;align-items:center;}\n"
             + ".summary span{padding:8px 16px;border-radius:6px;font-weight:600;}\n"
             + ".summary .total{background:#e3f2fd;color:#1565c0;}\n"
             + ".summary .pass{background:#e8f5e9;color:#2e7d32;}\n"
             + ".summary .fail{background:#ffebee;color:#c62828;}\n"
             + ".summary .duration{background:#f3e5f5;color:#6a1b9a;}\n"
+            + ".summary .failed-step{background:#ffcc80;color:#e65100;}\n"
             + "table{width:100%;border-collapse:collapse;background:white;box-shadow:0 1px 3px rgba(0,0,0,0.1);}\n"
             + "th,td{padding:10px 12px;text-align:left;border-bottom:1px solid #eee;}\n"
             + "th{background:#37474f;color:white;}\n"
@@ -114,6 +126,7 @@ public final class HtmlReport {
             + "<span class=\"pass\">Passed: " + passed + "</span>\n"
             + "<span class=\"fail\">Failed: " + failed + "</span>\n"
             + "<span class=\"duration\">Duration: " + (durationMs / 1000.0) + "s</span>\n"
+            + failedStepLine
             + "</div>\n"
             + "<table>\n<thead><tr><th>#</th><th>Action</th><th>Description</th><th>Status</th><th>Error</th></tr></thead>\n<tbody>\n"
             + rows
